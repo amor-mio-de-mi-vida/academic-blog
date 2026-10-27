@@ -6,7 +6,8 @@
     python3 render.py post.html              # -> post.page-01.png, post.page-02.png, ...
                                              #    the WHOLE page at desktop width (1440 px), in
                                              #    viewport-sized slices you can open with Read
-    python3 render.py post.html --phone      # -> post.phone-01.png ... at a true 390 px viewport
+    python3 render.py post.html --phone      # -> post.phone-01.png ... at a true 390 px viewport,
+                                             #    three consecutive screens side by side per image
     python3 render.py post.html --pdf        # -> post.pdf (print layout, for sharing)
 
 Slices are what you review: read every one. Headless Chrome cannot make windows narrower than
@@ -56,8 +57,13 @@ def run(args, capture=False):
     base = [chrome(), "--headless=new", "--disable-gpu", "--hide-scrollbars",
             "--no-first-run", "--no-default-browser-check", "--virtual-time-budget=10000",
             "--run-all-compositor-stages-before-draw", "--allow-file-access-from-files"]
-    r = subprocess.run(base + args, stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL, timeout=180)
+    try:
+        r = subprocess.run(base + args, stdout=subprocess.PIPE if capture else subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=180)
+    except subprocess.TimeoutExpired:
+        print("WARNING: Chrome timed out after 180 s; render the --offline build, which needs "
+              "no network for KaTeX")
+        return "" if capture else None
     return r.stdout.decode("utf-8", "replace") if capture else None
 
 
@@ -132,24 +138,29 @@ def slices(path, stem, width, height, phone):
     total = page_height(src, d, max(vw, 500))
     if total is None:
         total = height * 6
-        print("could not measure page height; rendering %d slices" % 6)
+        print("WARNING: could not measure page height; rendering 6 slices")
     if phone:
         total = int(total * 1.35)   # measured at 500 px; a 390 px layout is taller
     n = max(1, int(math.ceil(total / float(height))))
+    per = 3 if phone else 1         # phone: three consecutive screens side by side per image
     outs = []
-    for k in range(n):
-        scroll = ("window.addEventListener('load',function(){setTimeout(function(){"
-                  "window.scrollTo(0,%d);},600);});" % (k * height))
-        inner = tmp_html(inject(src, scroll), d)
-        # Scrolling the top-level page does not repaint in headless screenshots, but scrolling
-        # inside an iframe does; the iframe also gives a true 390 px viewport for --phone.
-        wrap = ("<!doctype html><html><body style='margin:0;background:#888'>"
-                "<iframe src='%s' style='width:%dpx;height:%dpx;border:0;background:#fff;display:block'>"
-                "</iframe></body></html>") % (os.path.basename(inner), vw, height)
+    for g in range(int(math.ceil(n / float(per)))):
+        files, frames = [], []
+        for k in range(g * per, min(n, (g + 1) * per)):
+            scroll = ("window.addEventListener('load',function(){setTimeout(function(){"
+                      "window.scrollTo(0,%d);},600);});" % (k * height))
+            inner = tmp_html(inject(src, scroll), d)
+            files.append(inner)
+            # Scrolling the top-level page does not repaint in headless screenshots, but
+            # scrolling inside an iframe does; the iframe also gives a true 390 px viewport.
+            frames.append("<iframe src='%s' style='width:%dpx;height:%dpx;border:0;"
+                          "background:#fff;flex:none'></iframe>" % (os.path.basename(inner), vw, height))
+        wrap = ("<!doctype html><html><body style='margin:0;background:#888;display:flex;gap:16px'>"
+                "%s</body></html>") % "".join(frames)
         target = tmp_html(wrap, d)
-        files = [inner, target]
-        win_w = max(vw, 500)
-        out = "%s.%s-%02d.png" % (stem, "phone" if phone else "page", k + 1)
+        files.append(target)
+        win_w = max(len(frames) * vw + (len(frames) - 1) * 16, 500)
+        out = "%s.%s-%02d.png" % (stem, "phone" if phone else "page", g + 1)
         try:
             run(["--force-device-scale-factor=1", "--window-size=%d,%d" % (win_w, height),
                  "--screenshot=%s" % os.path.abspath(out), url(target)])
@@ -182,7 +193,8 @@ def main():
         outs = slices(f, stem, a.width, a.height, a.phone)
     missing = [o for o in outs if not os.path.exists(o)]
     if missing:
-        sys.exit("render failed: %s not written" % ", ".join(missing))
+        sys.exit("render failed: %d of %d images not written (%s); retry, or render the "
+                 "--offline build" % (len(missing), len(outs), ", ".join(os.path.basename(m) for m in missing)))
     for o in outs:
         print("wrote %s" % o)
 

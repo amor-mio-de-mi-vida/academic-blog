@@ -59,6 +59,11 @@ plan to cite (download the PDF and extract text with
 `uv run --with pypdf python -c "..."`; use `grep -a`, since extracted text often has odd bytes). Extract the specific numbers you will use together with where they come from
 (e.g. "Table 3, row 2"). Facts you cannot verify are either left out or clearly labelled as
 unverified. This step decides whether the post can be trusted, so don't rush it.
+- **Rounded constants**: papers often print fitted constants rounded; derived results (optima,
+  crossovers) can change noticeably. Recompute derived numbers from the constants, and use the
+  arXiv TeX source or a replication for full precision when the paper's value doesn't reproduce.
+- **Gated sources** (e.g. Meta model configs on Hugging Face): read a public mirror to verify,
+  cite the official page, and say in the reference which copy you read.
 
 ### 2. Outline (write `outline.md`)
 Read `references/writing.md`, then write:
@@ -86,7 +91,9 @@ the user is around and the topic is ambiguous, show them the outline; otherwise 
   round of fixes per figure; skipping this check is the most common cause of ugly figures.
 
 ### 4. Write the source
-Fill `<slug>.src.html` using the snippets in `references/components.md`. Follow the ladder of
+Fill `<slug>.src.html` using the snippets in `references/components.md`. It is fine to write the
+body in a separate file and splice it into the template between `<article>` and `</article>`
+with a small script, then replace the header/footer placeholders. Follow the ladder of
 abstraction for each core idea: why → intuition → worked example with numbers → equation with
 every symbol explained → implications. Reference each figure in the text and tell the reader
 what to look at. Cite with `[@key]`, cross-reference with `@fig:` `@eq:` `@tab:` `@sec:`.
@@ -101,8 +108,9 @@ single-dollar math, uncited references.
 
 ### 6. Review the rendered post
 ```bash
+python3 SKILL_DIR/scripts/build_post.py <slug>/<slug>.src.html --offline   # review this build
 python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html           # -> <slug>.page-NN.png (desktop)
-python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html --phone   # -> <slug>.phone-NN.png (390 px)
+python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html --phone   # -> <slug>.phone-NN.png (3 phone screens per image)
 ```
 Open every desktop slice with Read, and at least the phone slices containing figures and
 equations (phone slices show the 390 px page with a gray band on the right; that band is not

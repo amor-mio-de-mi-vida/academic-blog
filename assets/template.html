@@ -111,7 +111,7 @@ figure.wide figcaption { margin-left: auto; margin-right: auto; }
 .badge.illustrative { color: #8a5f00; background: var(--c-orange-bg); border: 1px solid #f0d49a; }
 
 /* ===== Tables (booktabs style) =========================================== */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; margin-bottom: 1.4em; }
 table { border-collapse: collapse; width: 100%; font: 14.5px/1.5 var(--sans); font-variant-numeric: tabular-nums; }
 thead th { border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--ink); font-weight: 600; text-align: left; padding: 8px 10px; }
 tbody td { padding: 7px 10px; border-bottom: 1px solid var(--rule); }
@@ -169,7 +169,8 @@ svg .d-small   { font-family: var(--sans); font-size: 12px; fill: var(--ink-2); 
 svg .d-label   { font-family: var(--sans); font-size: 12px; fill: var(--ink-3); }
 svg .d-mono    { font-family: var(--mono); font-size: 12px; fill: var(--ink-2); }
 svg .d-math    { font-family: KaTeX_Math, "Latin Modern Math", "STIX Two Math", "Cambria Math", serif; font-style: italic; font-size: 16px; fill: var(--ink); }
-svg .d-mathrm  { font-family: KaTeX_Main, "Latin Modern Roman", "STIX Two Text", "Times New Roman", serif; font-size: 16px; fill: var(--ink); }
+svg .d-mathrm  { font-family: KaTeX_Main, "Latin Modern Roman", "STIX Two Text", "Times New Roman", serif; font-style: normal; font-size: 16px; fill: var(--ink); }
+svg .d-sub.d-mathrm { font-size: 11px; }
 svg .d-accent-text { fill: #b34f00; }
 svg .d-cell    { stroke: #fff; stroke-width: 1; }
 /* sub/superscripts: use these classes, NOT font-size="" attributes (CSS classes win over attributes) */

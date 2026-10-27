@@ -48,7 +48,12 @@ every diagram in every post shares one visual language. A complete, rendered ref
 
 ## 2. Canvas and grid
 
-- `viewBox="0 0 680 H"` for column width, `0 0 960 H` for `figure.wide`. **Do not** set
+- Default canvas: `viewBox="0 0 560 H"` (or narrower). Like charts, diagrams are never
+  upscaled past their natural width, so 560 looks fine on desktop and stays legible on phones.
+  Use 680 only when the content truly needs it; avoid 960 (it scrolls on phones).
+- **Compare by stacking, not by rows**: MHA vs GQA vs MQA, before vs after, method A vs B — put
+  the variants one above another on a narrow canvas rather than three in a row.
+- Otherwise `viewBox="0 0 680 H"` for column width, `0 0 960 H` for `figure.wide`. **Do not** set
   `width`/`height` attributes; the build scales the SVG to the column and caps it at natural size.
 - Work on an **8 px grid** (4 px for fine adjustments): box positions, sizes and gaps are
   multiples of 8. Standard box: height 40–48, corner radius 4. Gap between stages ≥ 40 so arrows
@@ -110,6 +115,10 @@ KaTeX does not run inside SVG, so write math as styled text:
   `d-math` looks like a small "o".
 - CSS classes override SVG presentation attributes: `font-size="11"` on a tspan inside `d-math`
   is ignored. Use the classes above or an inline `style="font-size:11px"`.
+- **Shape labels containing symbols** (`[t, d_h]`): keep the brackets in `d-mono` and the
+  symbol as math: `<text class="d-mono">[t, <tspan class="d-math">d</tspan><tspan class="d-math d-sub" dy="4">h</tspan><tspan dy="-4">]</tspan></text>`.
+- Never write equation numbers ("式 2") inside a diagram; the build renumbers equations and the
+  diagram would go stale. Refer to the equation in the caption with `@eq:`.
 - Avoid combining accents (L̂, x̃) in SVG text; the sans fonts render them badly. Write the hatted
   symbol in the caption's KaTeX instead, or use a short word label.
 - Upright operators/words (softmax, log, √) with `d-mathrm`.

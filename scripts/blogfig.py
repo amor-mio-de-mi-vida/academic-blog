@@ -28,7 +28,8 @@ from cycler import cycler  # noqa: E402
 from matplotlib import ticker  # noqa: E402
 
 # ----------------------------------------------------------------------------- tokens
-COLUMN = 680 / 96.0   # inches
+NARROW = 560 / 96.0   # inches; default for single-panel charts: readable on phones (~70% scale)
+COLUMN = 680 / 96.0   # full text column; shrinks to ~55% on a 390 px phone
 WIDE = 960 / 96.0
 
 INK, INK2, INK3 = "#1a1a1a", "#4a4a4a", "#767676"
@@ -122,9 +123,11 @@ def use(cjk=False):
     })
 
 
-def figure(width="column", aspect=0.62, nrows=1, ncols=1, **kw):
-    """Create a figure sized for the page. width: 'column' | 'wide' | inches."""
-    w = {"column": COLUMN, "wide": WIDE}.get(width, width)
+def figure(width="narrow", aspect=0.62, nrows=1, ncols=1, **kw):
+    """Create a figure sized for the page. width: 'narrow' (560 px, default) | 'column' (680) |
+    'wide' (960) | inches. The build never upscales a figure past its natural width, so a
+    narrow figure looks the same size on desktop but stays legible on phones."""
+    w = {"narrow": NARROW, "column": COLUMN, "wide": WIDE}.get(width, width)
     kw.setdefault("layout", "constrained")
     return plt.subplots(nrows, ncols, figsize=(w, w * aspect), **kw)
 
@@ -136,9 +139,11 @@ def panel_labels(axes, labels="abcdefgh", x=-0.02, y=1.02):
                 ha="right", va="bottom", color=INK)
 
 
-def label_lines(ax, lines=None, texts=None, min_gap_px=15, dx_pt=6, **kw):
+def label_lines(ax, lines=None, texts=None, min_gap_px=15, dx_pt=6, at_x=None, **kw):
     """Direct-label lines at their right end (replaces a legend). Labels are nudged apart
-    vertically so they never overlap; call AFTER setting axis limits/scales."""
+    vertically so they never overlap; call AFTER setting axis limits/scales.
+    at_x: label every line at this x (interpolated) instead of its last visible point - use it
+    when a series is split into solid + dotted segments or lines end at different x."""
     lines = lines or [l for l in ax.get_lines() if not l.get_label().startswith("_")]
     texts = texts or [l.get_label() for l in lines]
     fig = ax.figure
@@ -153,8 +158,12 @@ def label_lines(ax, lines=None, texts=None, min_gap_px=15, dx_pt=6, **kw):
         if not len(inside):
             continue
         i = inside[-1]                                # last point actually visible
-        disp = ax.transData.transform((x[i], y[i]))
-        pts.append([disp[1], disp[1], x[i], y[i], line.get_color(), t])
+        lx, ly = x[i], y[i]
+        if at_x is not None:
+            order = np.argsort(x)
+            lx, ly = at_x, float(np.interp(at_x, x[order], y[order]))
+        disp = ax.transData.transform((lx, ly))
+        pts.append([disp[1], disp[1], lx, ly, line.get_color(), t])
     pts.sort(key=lambda p: p[0])
     for k in range(1, len(pts)):                      # push up to keep min gap
         if pts[k][1] - pts[k - 1][1] < min_gap_px:
@@ -294,7 +303,8 @@ def label_along(ax, x, y, text, line_xy, color=INK2, dy_pt=4, **kw):
 def note(ax, x, y, text, xytext=(20, 20), color=INK2, textcoords="offset points", **kw):
     """Annotation with a thin arrow: use it to point at THE thing the caption talks about.
     xytext is an offset in points by default; pass textcoords="data" to give a data position."""
-    return ax.annotate(text, (x, y), xytext=xytext, textcoords=textcoords, fontsize=10,
+    return ax.annotate(text, (x, y), xytext=xytext, textcoords=textcoords,
+                       fontsize=kw.pop("fontsize", 10),
                        color=color, ha=kw.pop("ha", "left"), va=kw.pop("va", "center"),
                        arrowprops=dict(arrowstyle="-", color=color, linewidth=0.8,
                                        shrinkA=2, shrinkB=3), **kw)
@@ -307,7 +317,8 @@ def save(fig, path, preview=True):
         os.makedirs(d, exist_ok=True)
     # annotations outside the axes (direct labels, notes) are not part of the tight bbox by
     # default and get clipped; pass them explicitly
-    extra = [t for ax in fig.axes for t in ax.texts]
+    from matplotlib.text import Text
+    extra = [t for t in fig.findobj(Text) if t.get_visible() and t.get_text()]
     fig.savefig(path + ".svg", bbox_inches="tight", pad_inches=0.1, bbox_extra_artists=extra,
                 metadata={"Date": None, "Creator": None})
     if preview:
@@ -315,3 +326,54 @@ def save(fig, path, preview=True):
                     bbox_extra_artists=extra)
     plt.close(fig)
     print("saved %s.svg%s" % (path, " and .preview.png" if preview else ""))
+
+
+# ----------------------------------------------------------------------------- statistics
+# Small-sample helpers without scipy. Use them for every interval you plot or quote.
+_T975 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306,
+         9: 2.262, 10: 2.228, 12: 2.179, 15: 2.131, 20: 2.086, 25: 2.060, 30: 2.042, 40: 2.021,
+         60: 2.000, 120: 1.980, 10 ** 9: 1.960}
+_T95 = {1: 6.314, 2: 2.920, 3: 2.353, 4: 2.132, 5: 2.015, 6: 1.943, 7: 1.895, 8: 1.860,
+        9: 1.833, 10: 1.812, 12: 1.782, 15: 1.753, 20: 1.725, 25: 1.708, 30: 1.697, 40: 1.684,
+        60: 1.671, 120: 1.658, 10 ** 9: 1.645}
+
+
+def t_quantile(df, conf=0.95):
+    """Two-sided t critical value (conf 0.95 or 0.90); interpolates in 1/df for fractional df."""
+    tab = {0.95: _T975, 0.90: _T95}[conf]
+    ks = sorted(tab)
+    df = max(float(df), 1.0)
+    for lo, hi in zip(ks, ks[1:]):
+        if lo <= df <= hi:
+            w = (1 / lo - 1 / df) / (1 / lo - 1 / hi)
+            return tab[lo] + w * (tab[hi] - tab[lo])
+    return tab[ks[-1]]
+
+
+def mean_ci(x, conf=0.95):
+    """(mean, lo, hi): t-based CI of the mean. With 3 seeds this is mean ± 4.30 s.e."""
+    x = np.asarray(x, float)
+    m, se = x.mean(), x.std(ddof=1) / np.sqrt(len(x))
+    h = t_quantile(len(x) - 1, conf) * se
+    return m, m - h, m + h
+
+
+def welch_ci(a, b, conf=0.95):
+    """(diff, lo, hi, df): CI of mean(a) - mean(b) with Welch's unequal-variance t."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
+    d, se = a.mean() - b.mean(), np.sqrt(va + vb)
+    df = (va + vb) ** 2 / (va ** 2 / (len(a) - 1) + vb ** 2 / (len(b) - 1))
+    h = t_quantile(df, conf) * se
+    return d, d - h, d + h, df
+
+
+def slope_ci(x, y, conf=0.95):
+    """(slope, lo, hi): least-squares slope of y on x with a t-based CI (e.g. gain per
+    doubling: slope_ci(np.log2(rank), acc))."""
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    b, a = np.polyfit(x, y, 1)
+    resid = y - (a + b * x)
+    se = np.sqrt(resid @ resid / (len(x) - 2) / ((x - x.mean()) @ (x - x.mean())))
+    h = t_quantile(len(x) - 2, conf) * se
+    return b, b - h, b + h

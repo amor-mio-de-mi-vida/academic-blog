@@ -262,12 +262,19 @@ def build(src_path, out_path, offline=False):
         nq = len(re.findall(r'[\u4e00-\u9fff，。：；]\s*"|"\s*[\u4e00-\u9fff，。]', txt0))
         if nq:
             warn("%d ASCII double quotes next to Chinese text; use full-width “ ” in Chinese sentences" % nq)
+    for sm in re.finditer(r'<aside class="sidenote">.*?</aside>\s*(<h[23]|<figure|<div class="eq"|</article>|<aside)', s, flags=re.S):
+        warn("a sidenote sits right before %s; it will float beside that element, not the paragraph "
+             "it annotates - move it just before its paragraph" % sm.group(1).strip("<"))
     tl = re.search(r'<div class="tldr">(.*?)</div>', s, flags=re.S)
     if tl:
         for li in re.findall(r"<li>(.*?)</li>", tl.group(1), flags=re.S):
-            # count measurements, not digits inside names like GQA-8, Llama-2-7B, GSM8K
-            nums = re.findall(r"(?<![\w.\-])\d[\d,.]*%?(?![A-Za-z\d\-])", re.sub(r"\\\(.*?\\\)", "", strip_tags(li)))
-            if len(nums) > 3:
+            # count measurements (62.1, 70B, 1.4T, 3.2x, 45%); skip digits inside names (GQA-8,
+            # Llama-2-7B, GSM8K), settings written as "r = 8", and years
+            t0 = re.sub(r"\\\(.*?\\\)", "", strip_tags(li))
+            t0 = re.sub(r"=\s*\d[\d.]*", "=", t0)
+            nums = [n for n in re.findall(r"(?<![A-Za-z\d.\-])\d[\d,.]*(?:%|×|x|[KMBT])?(?![A-Za-z\d\-])", t0)
+                    if not re.fullmatch(r"(19|20)\d\d", n)]
+            if len(nums) > 2:
                 warn("TL;DR bullet has %d numbers (aim for one key number): %s" % (len(nums), strip_tags(li)[:50]))
 
     # figures & tables --------------------------------------------------------------
@@ -330,9 +337,9 @@ def build(src_path, out_path, offline=False):
         if not any(k == "eq" and nm == name for k, nm in ref_uses):
             warn("%s is numbered but never referenced (@eq:%s); drop its id or refer to it" % (a["id"], name))
         tex = strip_tags(m.group(2))
-        if visible_len(tex) > 50:
-            warn("%s has a row of ~%d glyphs; it will crowd the equation number and scroll on phones - "
-                 "split it into more rows with aligned/gathered" % (a["id"], visible_len(tex)))
+        if visible_len(tex) > 42:
+            warn("%s has a row of ~%d glyphs; rows over ~40 glyphs overflow a phone screen and crowd "
+                 "the equation number - split it into more rows with aligned/gathered" % (a["id"], visible_len(tex)))
         return '<div%s>%s<span class="eq-num">(%d)</span></div>' % (m.group(1), m.group(2), eq_n[0])
     s = re.sub(r"<div\b([^>]*\bclass=\"eq\"[^>]*)>(.*?)</div>", eq_repl, s, flags=re.S)
 

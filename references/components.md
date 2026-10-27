@@ -104,7 +104,8 @@ Check every sidenote's position in the rendered slices; the lint cannot see this
 ```html
 <pre><code>scores = q @ k.transpose(-2, -1) / math.sqrt(d_k)</code></pre>
 ```
-Escape `<`, `>` and `&` inside code. Keep snippets short (≤ 20 lines) and runnable in spirit.
+Escape `<`, `>` and `&` inside code. Keep snippets short (≤ 20 lines), lines ≤ 64 characters
+(longer lines scroll sideways on phones), and actually run them when you can.
 
 ## Notation table (when > ~6 symbols)
 ```html

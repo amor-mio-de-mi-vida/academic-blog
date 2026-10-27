@@ -50,10 +50,10 @@ Multi-panel figures: share axes when comparing (`sharey=True`), label panels (a)
 `bf.panel_labels` and refer to them in the caption. Check that panel labels don't hit the top
 tick label (leave headroom in `ylim`).
 
-**Phones**: a 960 px two-panel figure shrinks to ~40% on a phone and its ticks become unreadable
-(the template lets wide figures scroll sideways, which is a fallback, not a design). Prefer
-column-width figures with panels **stacked vertically** (`nrows=2`, `aspect≈1.0`) unless the
-side-by-side comparison is the point. Keep annotation text ≥ 10 pt; don't shrink blogfig's sizes to fit more in.
+**Phones**: check every chart in the `--phone` render. Multi-panel figures: stack panels
+vertically in a narrow figure (`bf.figure("narrow", nrows=2, aspect=1.1)`) unless the side-by-side
+comparison is the point. Keep annotation text ≥ 10 pt; don't shrink blogfig's sizes to fit more
+in — cut annotations instead.
 
 **Each figure must add something no other figure shows.** If two figures share a y-quantity
 (e.g. accuracy vs rank and accuracy vs parameter count, where params ∝ rank), merge them or drop
@@ -102,9 +102,11 @@ These are non-negotiable because a misleading figure is worse than no figure.
 
 blogfig sets most of this; know the reasons so you can make good exceptions.
 
-- **Size for the page**: `bf.figure("column")` is 680 px wide = the text column, so 11 pt text
-  shows slightly larger than caption text. Use `"wide"` (960 px) for dense multi-panel figures.
-  Height via `aspect` (0.5–0.7 typical; heatmaps square).
+- **Size for the page**: `bf.figure()` defaults to `"narrow"` (560 px). The build never scales
+  a figure above its natural width, so it looks the same on desktop but shrinks only to ~70% on
+  a 390 px phone (ticks stay ~9 px). Use `"column"` (680 px) only when the data needs the
+  width, and `"wide"` (960 px) rarely — on phones it scrolls sideways. Height via `aspect`
+  (0.5–0.7 typical; heatmaps square).
 - **Direct labels over legends** (`bf.label_lines`): the eye doesn't have to jump back and forth.
   Use a legend only when there are many series or direct labels would collide.
 - **No in-figure title**: the caption carries it. Axis labels state quantity and unit:
@@ -120,6 +122,13 @@ blogfig sets most of this; know the reasons so you can make good exceptions.
 - **Annotate the point**: an arrow + short note (`bf.note`) at the crossover, the jump, the
   outlier the text discusses. `bf.note(..., textcoords="data")` places the text at a data
   position instead of an offset.
+- **Split series** (solid fitted range + dotted extrapolation, or lines ending at different x):
+  `bf.label_lines(ax, at_x=...)` labels all lines at the same x so labels don't land mid-plot.
+- **Keep notes inside the axes**: a `bf.note` whose text extends past the left axis runs into
+  the y-label; check the preview.
+- **Reference lines vs labels**: draw dashed reference lines (20 tokens/param, full-FT level)
+  first, then put value labels where no line passes — in the preview, every label must sit on
+  clear background.
 - **Labels along sloped lines** (iso-compute lines, power laws on log–log axes): use
   `bf.label_along(ax, x, y, text, line_xy=(xs, ys))`, which rotates the text to the line's
   on-screen angle.
@@ -136,6 +145,11 @@ blogfig sets most of this; know the reasons so you can make good exceptions.
   Powers too: `r"$10^{23}$"` — never Unicode superscripts like "10²³", which render broken.
 - **Chinese labels**: call `bf.use(cjk=True)` in every plot script of a Chinese post. Without
   it, a label that mixes Chinese and math (`"验证损失 $\mathcal{L}$"`) shows empty boxes.
+
+**Intervals**: compute every interval with blogfig's helpers so they are right for small n:
+`bf.mean_ci(runs)` (t-based CI of a mean), `bf.welch_ci(a, b)` (CI of a difference),
+`bf.slope_ci(x, y)` (CI of a fitted slope, e.g. gain per doubling of rank). Say "95% CI" in the
+caption. No scipy needed.
 
 ## 5. Captions
 
