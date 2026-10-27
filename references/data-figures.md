@@ -138,7 +138,9 @@ blogfig sets most of this; know the reasons so you can make good exceptions.
 - **Consistent scales across related figures**: if two charts show the same quantity (context
   length, compute), use the same axis type and range unless there is a stated reason; readers
   compare them by position.
-- **Collisions**: in the preview, check that no label touches a line (including fit lines and
+- **Collisions**: `bf.save` runs `bf.check_overlaps` and prints a `blogfig OVERLAP` line for
+  every label that touches another label or that a line/marker crosses; fix them all. It cannot
+  see collisions with filled areas or arrows, so also check the preview that no label touches a line (including fit lines and
   connectors drawn later), marker, error bar, panel edge or another label. Move it, shorten it, or use `bf.label_lines` / `bf.note` offsets.
 - **Less ink**: no top/right spines, light y-grid only, no 3-D, no shadows, no gradient fills.
 - **Math in labels** uses mathtext (`r"$d_k$"`), rendered in Computer Modern to match KaTeX.

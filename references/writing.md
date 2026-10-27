@@ -58,6 +58,11 @@ make sure each gets a section or figure with real depth — not a paragraph sque
 others. For an engineering audience, a short runnable code snippet of the core mechanism is often
 the clearest worked example.
 
+**Model the claim, don't only quote it.** When an important conclusion rests on a quantitative
+argument (e.g. "training past the compute-optimal point pays off once inference is counted"),
+add a small calculation or chart of your own built from cited numbers, clearly labelled as
+your model. Quoting someone else's conclusion is weaker than showing the reader why.
+
 **Concise beats exhaustive.** Cut any section the main argument does not need; move side topics
 to sidenotes or `<details>`.
 

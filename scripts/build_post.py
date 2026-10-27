@@ -165,6 +165,35 @@ def visible_len(tex):
     return len(re.sub(r"[{}\s]|\\\[|\\\]", "", v))
 
 
+CLASS_PX = {"d-text": 14, "d-title": 14, "d-small": 13, "d-label": 13, "d-mono": 13,
+            "d-math": 16, "d-mathrm": 16, "d-sub": 11}
+PHONE_COL = 358      # 390 px phone minus page gutters
+MIN_PHONE_PX = 8.0    # 560 px charts (10 pt ticks) and 560 px diagrams (13 px labels) pass
+
+
+def phone_check(fid, fig_class, body):
+    """Warn when a figure's smallest text would be unreadable on a 390 px phone. The build caps
+    every SVG at its natural width, so narrower figures shrink less."""
+    m = re.search(r'<svg\b[^>]*style="max-width:(\d+)px', body)
+    if not m:
+        return
+    nat = float(m.group(1))
+    avail = 600.0 if "wide" in fig_class.split() else PHONE_COL   # wide figures scroll at 600 px
+    scale = min(1.0, avail / nat)
+    if "<text" in body:              # hand-made diagram: smallest declared font size
+        sizes = [float(v) for v in re.findall(r'font-size[=:]\s*"?([0-9.]+)', body)]
+        for cls in re.findall(r'class="([^"]*)"', body):
+            sizes += [CLASS_PX[c] for c in cls.split() if c in CLASS_PX and c != "d-sub"]
+        smallest, what = (min(sizes) if sizes else 12.0), "diagram text"
+        fix = "draw it on a narrower viewBox (<= 560) or stack its parts vertically"
+    else:                            # matplotlib (glyphs as paths): blogfig ticks are 10 pt
+        smallest, what = 10 * 96 / 72.0, "tick labels"
+        fix = 'make it with bf.figure("narrow") (560 px) or stack panels vertically'
+    px = smallest * scale
+    if px < MIN_PHONE_PX:
+        warn("%s is %d px wide: on a phone its %s shrink to ~%.1f px - %s" % (fid, nat, what, px, fix))
+
+
 def attrs_of(tag_attrs):
     return dict(re.findall(r'([\w-]+)="([^"]*)"', tag_attrs))
 
@@ -316,6 +345,7 @@ def build(src_path, out_path, offline=False):
             warn("%s: caption is very short; state the takeaway and how to read the figure" % fid)
         if not any(k == kind and nm == fid.split("-", 1)[1] for k, nm in ref_uses):
             warn("%s is never referenced in the text (@%s:%s)" % (fid, kind, fid.split("-", 1)[1]))
+        phone_check(fid, a.get("class", ""), body)
         label = '<span class="fig-label">%s%s%d</span>' % (L[kind], nb, n)
         badge = '<span class="badge illustrative">%s</span>' % L["illus"] if src == "illustrative" else ""
         new_cap = '<figcaption id="%s-cap"%s>%s%s%s</figcaption>' % (fid, capm.group(1), label, badge, cap_inner)

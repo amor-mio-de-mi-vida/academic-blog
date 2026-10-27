@@ -60,7 +60,9 @@ every diagram in every post shares one visual language. A complete, rendered ref
   are visible.
 - Keep ≥ 16 px margin to the canvas edges; crop the viewBox to the content (shift its y origin
   instead of leaving empty bands).
-- Minimum text size 12 px (mono/labels), 14 px for box labels, 16 px for math symbols.
+- Minimum text size 13 px (mono/labels), 14 px for box labels, 16 px for math symbols. The build
+  warns when a diagram's smallest text would fall below 8 px on a phone (13 px on a 560 canvas
+  is the limit).
 
 ## 3. The class vocabulary (defined in the template CSS)
 
@@ -74,7 +76,7 @@ every diagram in every post shares one visual language. A complete, rendered ref
 | `d-arrow` (+ `accent`, `muted`, `dashed`) | connectors; `dashed` = optional / gradient / feedback path |
 | `d-head` (+ `accent`, `muted`) | arrowhead fill, used inside `<marker>` |
 | `d-text`, `d-title` | 14 px labels, regular / semibold |
-| `d-small`, `d-label` | 12 px secondary text, darker / lighter gray |
+| `d-small`, `d-label` | 13 px secondary text, darker / lighter gray |
 | `d-mono` | tensor shapes, code identifiers |
 | `d-math`, `d-mathrm` | italic math symbols / upright math words (KaTeX fonts) |
 | `d-accent-text` | text in the accent colour |
@@ -129,14 +131,14 @@ KaTeX does not run inside SVG, so write math as styled text:
 - Text is real text (selectable, searchable) and uses the page fonts. Leave ≥ 8 px padding
   around labels inside boxes because readers' fonts can be slightly wider.
 - **Width budget**: at 14 px a CJK character is ~14 px wide and a Latin character ~7.5 px; at
-  12 px about 12 / 6.5 px. Size boxes from the longest label (chars × width + 16 px). SVG text
+  13 px about 13 / 7 px. Size boxes from the longest label (chars × width + 16 px). SVG text
   does not wrap: break long labels into several `<text>` lines yourself.
 - **Phone legibility trick**: the build caps an SVG at its natural (viewBox) width, so drawing
   a diagram on a *narrower* viewBox (e.g. 480 instead of 680) makes it look the same on desktop
   but ~1.4× larger on phones. Use it for diagrams with many small labels.
 - **Wide diagrams on phones**: a 960 px diagram shrinks ~2.6× on a phone. The template lets
   wide diagrams scroll sideways below 640 px, but prefer column-width (680) diagrams, and keep
-  labels ≥ 12 px so they survive scaling.
+  labels ≥ 13 px so they survive scaling.
 
 ## 6. Recipes for common AI diagrams
 

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 44 680 196" font-family="sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 44 560 196" font-family="sans-serif">
   <defs>
     <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,1 L9,5 L0,9 z" class="d-head"/>
@@ -9,49 +9,49 @@
   </defs>
 
   <!-- input -->
-  <rect class="d-box" x="16" y="116" width="56" height="48" rx="4"/>
-  <text class="d-math" x="44" y="146" text-anchor="middle">X</text>
-  <text class="d-mono" x="44" y="184" text-anchor="middle">[T, d]</text>
+  <rect class="d-box" x="8" y="116" width="48" height="48" rx="4"/>
+  <text class="d-math" x="32" y="146" text-anchor="middle">X</text>
+  <text class="d-mono" x="32" y="184" text-anchor="middle">[T, d]</text>
 
   <!-- fan-out to the three projections -->
-  <path class="d-arrow" d="M72 140 H92 V72 H110" marker-end="url(#ah)"/>
-  <path class="d-arrow" d="M72 140 H110" marker-end="url(#ah)"/>
-  <path class="d-arrow" d="M92 140 V208 H110" marker-end="url(#ah)"/>
+  <path class="d-arrow" d="M56 140 H72 V72 H86" marker-end="url(#ah)"/>
+  <path class="d-arrow" d="M56 140 H86" marker-end="url(#ah)"/>
+  <path class="d-arrow" d="M72 140 V208 H86" marker-end="url(#ah)"/>
 
   <!-- projections -->
-  <rect class="d-box soft" x="112" y="52" width="64" height="40" rx="4"/>
-  <text class="d-math" x="139" y="77" text-anchor="middle">W<tspan class="d-sub" dy="5">Q</tspan></text>
-  <rect class="d-box soft" x="112" y="120" width="64" height="40" rx="4"/>
-  <text class="d-math" x="139" y="145" text-anchor="middle">W<tspan class="d-sub" dy="5">K</tspan></text>
-  <rect class="d-box soft" x="112" y="188" width="64" height="40" rx="4"/>
-  <text class="d-math" x="139" y="213" text-anchor="middle">W<tspan class="d-sub" dy="5">V</tspan></text>
+  <rect class="d-box soft" x="88" y="52" width="52" height="40" rx="4"/>
+  <text class="d-math" x="112" y="77" text-anchor="middle">W<tspan class="d-sub" dy="5">Q</tspan></text>
+  <rect class="d-box soft" x="88" y="120" width="52" height="40" rx="4"/>
+  <text class="d-math" x="112" y="145" text-anchor="middle">W<tspan class="d-sub" dy="5">K</tspan></text>
+  <rect class="d-box soft" x="88" y="188" width="52" height="40" rx="4"/>
+  <text class="d-math" x="112" y="213" text-anchor="middle">W<tspan class="d-sub" dy="5">V</tspan></text>
 
   <!-- Q, K into the score box -->
-  <path class="d-arrow" d="M176 72 H200 V96 H222" marker-end="url(#ah)"/>
-  <path class="d-arrow" d="M176 140 H200 V116 H222" marker-end="url(#ah)"/>
-  <text class="d-math" x="188" y="64" text-anchor="middle" font-size="14">Q</text>
-  <text class="d-math" x="188" y="158" text-anchor="middle" font-size="14">K</text>
+  <path class="d-arrow" d="M140 72 H156 V96 H174" marker-end="url(#ah)"/>
+  <path class="d-arrow" d="M140 140 H156 V116 H174" marker-end="url(#ah)"/>
+  <text class="d-math" x="148" y="64" text-anchor="middle" style="font-size:14px">Q</text>
+  <text class="d-math" x="148" y="158" text-anchor="middle" style="font-size:14px">K</text>
 
-  <rect class="d-box" x="224" y="82" width="120" height="48" rx="4"/>
-  <text class="d-math" x="284" y="112" text-anchor="middle">QK<tspan class="d-sub" dy="-7">⊤</tspan><tspan dy="7" class="d-mathrm"> / √</tspan>d<tspan class="d-sub" dy="4">k</tspan></text>
-  <text class="d-label" x="284" y="74" text-anchor="middle">similarity scores</text>
+  <rect class="d-box" x="176" y="82" width="100" height="48" rx="4"/>
+  <text class="d-math" x="226" y="112" text-anchor="middle">QK<tspan class="d-sub" dy="-7">⊤</tspan><tspan class="d-mathrm" dy="7"> / √</tspan>d<tspan class="d-sub" dy="4">k</tspan></text>
+  <text class="d-label" x="226" y="74" text-anchor="middle">similarity scores</text>
 
   <!-- softmax: the step this figure is about -->
-  <path class="d-arrow" d="M344 106 H382" marker-end="url(#ah)"/>
-  <rect class="d-box accent" x="384" y="82" width="96" height="48" rx="4"/>
-  <text class="d-mathrm" x="432" y="111" text-anchor="middle">softmax</text>
-  <text class="d-label d-accent-text" x="432" y="74" text-anchor="middle">row-normalise</text>
-  <text class="d-mono" x="432" y="150" text-anchor="middle">A: [T, T]</text>
+  <path class="d-arrow" d="M276 106 H314" marker-end="url(#ah)"/>
+  <rect class="d-box accent" x="316" y="82" width="76" height="48" rx="4"/>
+  <text class="d-mathrm" x="354" y="111" text-anchor="middle">softmax</text>
+  <text class="d-label d-accent-text" x="354" y="74" text-anchor="middle">row-normalise</text>
+  <text class="d-mono" x="354" y="150" text-anchor="middle">A: [T, T]</text>
 
   <!-- weighted sum with V -->
-  <path class="d-arrow accent" d="M480 106 H526" marker-end="url(#ah-acc)"/>
-  <path class="d-arrow" d="M176 208 H560 V132" marker-end="url(#ah)"/>
-  <text class="d-math" x="368" y="200" text-anchor="middle" font-size="14">V</text>
-  <rect class="d-box" x="528" y="82" width="64" height="48" rx="4"/>
-  <text class="d-math" x="560" y="112" text-anchor="middle">AV</text>
+  <path class="d-arrow accent" d="M392 106 H428" marker-end="url(#ah-acc)"/>
+  <path class="d-arrow" d="M140 208 H454 V132" marker-end="url(#ah)"/>
+  <text class="d-math" x="300" y="200" text-anchor="middle" style="font-size:14px">V</text>
+  <rect class="d-box" x="430" y="82" width="48" height="48" rx="4"/>
+  <text class="d-math" x="454" y="112" text-anchor="middle">AV</text>
 
   <!-- output -->
-  <path class="d-arrow" d="M592 106 H626" marker-end="url(#ah)"/>
-  <text class="d-math" x="646" y="112" text-anchor="middle">Z</text>
-  <text class="d-mono" x="646" y="150" text-anchor="middle">[T, d]</text>
+  <path class="d-arrow" d="M478 106 H504" marker-end="url(#ah)"/>
+  <text class="d-math" x="524" y="112" text-anchor="middle">Z</text>
+  <text class="d-mono" x="524" y="150" text-anchor="middle">[T, d]</text>
 </svg>

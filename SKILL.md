@@ -86,9 +86,12 @@ the user is around and the topic is ambiguous, show them the outline; otherwise 
 - **Diagrams**: read `references/diagrams.md` and look at `assets/examples/attention.svg`.
   Write `figs/<name>.svg` by hand using the template's `d-*` classes, then
   `python3 SKILL_DIR/scripts/render.py figs/<name>.svg` → `figs/<name>.preview.png`.
-- **Open every preview PNG and inspect it.** Check overlaps, clipping, legibility, that the
-  takeaway is visible, that symbols match the equations. Fix and re-render. Expect at least one
-  round of fixes per figure; skipping this check is the most common cause of ugly figures.
+- **Fix every `blogfig OVERLAP` line** that `bf.save` prints: it detects labels that collide
+  with other labels or that a line/marker passes through (the most common defect in testing).
+  Move the label, shorten it, or draw the reference line elsewhere; re-run until none remain.
+- **Open every preview PNG and inspect it.** Check clipping, legibility, that the takeaway is
+  visible, that symbols match the equations — things the overlap check cannot see. Expect at
+  least one round of fixes per figure.
 
 ### 4. Write the source
 Fill `<slug>.src.html` using the snippets in `references/components.md`. It is fine to write the
@@ -103,8 +106,9 @@ what to look at. Cite with `[@key]`, cross-reference with `@fig:` `@eq:` `@tab:`
 python3 SKILL_DIR/scripts/build_post.py <slug>/<slug>.src.html
 ```
 Fix every ERROR (unresolved refs, missing provenance, uncited paper data, placeholders,
-TODOs). Treat WARNINGs as a review list: unreferenced figures, very short captions,
-single-dollar math, uncited references.
+TODOs). Fix every WARNING too unless you have a stated reason: unreferenced figures/equations,
+figures too small on phones, over-long equation rows, number-heavy TL;DR bullets, misplaced
+sidenotes, ASCII quotes in Chinese, short captions, uncited references.
 
 ### 6. Review the rendered post
 ```bash

@@ -310,15 +310,141 @@ def note(ax, x, y, text, xytext=(20, 20), color=INK2, textcoords="offset points"
                                        shrinkA=2, shrinkB=3), **kw)
 
 
-def save(fig, path, preview=True):
-    """Write <path>.svg for the post and <path>.preview.png for visual checking."""
+def _all_axes(fig):
+    out = []
+    def walk(ax):
+        out.append(ax)
+        for c in getattr(ax, "child_axes", []):
+            walk(c)
+    for ax in fig.axes:
+        if ax not in out:
+            walk(ax)
+    return out
+
+
+def _texts(fig, ticks=True):
+    """Visible, non-empty texts that are actually drawn: annotations, axis labels, titles,
+    legend entries, in-view tick labels (out-of-view ticks are skipped)."""
+    from matplotlib.text import Text
+    ts = list(fig.texts)
+    for ax in _all_axes(fig):
+        ts += list(ax.texts)
+        ts += [a.label for a in (ax.xaxis, ax.yaxis)]
+        ts += [getattr(ax, n, None) for n in ("title", "_left_title", "_right_title")]
+        leg = ax.get_legend()
+        if leg is not None:
+            ts += list(leg.get_texts())
+        if ticks:
+            for axis in (ax.xaxis, ax.yaxis):
+                ts += list(axis.get_majorticklabels()) + list(axis.get_minorticklabels())
+    seen, out = set(), []
+    for t in ts:
+        if isinstance(t, Text) and id(t) not in seen and t.get_visible() and t.get_text().strip():
+            seen.add(id(t))
+            out.append(t)
+    return out
+
+
+def check_overlaps(fig, pad_px=1.0):
+    """Find text that collides with other text or with plotted lines/markers.
+    Returns a list of human-readable problems; save() prints them. Checks:
+      - any two drawn texts (labels, annotations, legend entries, tick labels) that overlap
+      - any annotation/label text that a data line or marker passes through
+    Arrows, gridlines, spines and legend handles are ignored; rotated labels are tested
+    against their rotated box."""
+    from matplotlib.text import Text
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+
+    def geom(t):
+        bb = Text.get_window_extent(t, r)          # text only, not an annotation's arrow
+        ang = np.radians(t.get_rotation() or 0.0)
+        cx, cy = (bb.x0 + bb.x1) / 2, (bb.y0 + bb.y1) / 2
+        c, s_ = abs(np.cos(ang)), abs(np.sin(ang))
+        if abs(c - s_) < 0.2:                       # ~45°: fall back to a conservative box
+            w, h = min(bb.width, bb.height) * 1.2, min(bb.width, bb.height) * 0.4
+        else:                                       # solve W = w c + h s, H = w s + h c
+            det = c * c - s_ * s_
+            w = (bb.width * c - bb.height * s_) / det
+            h = (bb.height * c - bb.width * s_) / det
+        return bb, (cx, cy, ang, max(w, 1) / 2 - pad_px, max(h, 1) / 2 - pad_px)
+
+    def inside(pts, g):
+        cx, cy, ang, hw, hh = g
+        d = pts - (cx, cy)
+        u = d[:, 0] * np.cos(ang) + d[:, 1] * np.sin(ang)
+        v = -d[:, 0] * np.sin(ang) + d[:, 1] * np.cos(ang)
+        return (np.abs(u) < hw) & (np.abs(v) < hh)
+
+    texts = [t for t in _texts(fig) if Text.get_window_extent(t, r).width > 0]
+    gs = [(t,) + geom(t) for t in texts]
+    name = lambda t: t.get_text().strip().replace("\n", " ")[:30]
+    problems = []
+    for i in range(len(gs)):
+        for j in range(i + 1, len(gs)):
+            a, b = gs[i], gs[j]
+            if not a[1].overlaps(b[1]):
+                continue
+            # confirm with rotated boxes: sample b's corners/centre inside a, and vice versa
+            def samples(g):
+                cx, cy, ang, hw, hh = g
+                loc = np.array([[0, 0], [hw, hh], [-hw, hh], [hw, -hh], [-hw, -hh], [hw, 0], [-hw, 0], [0, hh], [0, -hh]]) * 0.9
+                rot = np.array([[np.cos(ang), -np.sin(ang)], [np.sin(ang), np.cos(ang)]])
+                return loc @ rot.T + (cx, cy)
+            if inside(samples(b[2]), a[2]).any() or inside(samples(a[2]), b[2]).any():
+                problems.append("text '%s' overlaps text '%s'" % (name(a[0]), name(b[0])))
+    tick_ids = set()
+    for ax in _all_axes(fig):
+        for axis in (ax.xaxis, ax.yaxis):
+            tick_ids.update(id(t) for t in axis.get_majorticklabels() + axis.get_minorticklabels())
+    for ax in fig.axes:
+        abox = ax.get_window_extent(r)
+        for line in ax.get_lines():
+            if not line.get_visible():
+                continue
+            ls_none = line.get_linestyle() in ("None", "none", "", " ") or line.get_linewidth() == 0
+            if ls_none and line.get_marker() in (None, "None", "none", ""):
+                continue
+            xy = line.get_transform().transform(
+                np.column_stack([line.get_xdata(orig=False), line.get_ydata(orig=False)]).astype(float))
+            xy = xy[np.all(np.isfinite(xy), axis=1)]
+            if len(xy) == 0:
+                continue
+            if ls_none:
+                pts = xy
+            else:
+                pts = [xy[0]]
+                for p0, p1 in zip(xy[:-1], xy[1:]):
+                    n = int(max(1, np.hypot(*(p1 - p0)) // 2))
+                    pts.extend(p0 + (p1 - p0) * k / n for k in range(1, n + 1))
+                pts = np.array(pts)
+            keep = ((pts[:, 0] >= abox.x0) & (pts[:, 0] <= abox.x1) &
+                    (pts[:, 1] >= abox.y0) & (pts[:, 1] <= abox.y1))
+            pts = pts[keep]
+            if not len(pts):
+                continue
+            label = line.get_label()
+            lname = ("line '%s'" % label) if not label.startswith("_") else "a line"
+            for t, bb, g in gs:
+                if id(t) in tick_ids or t.axes is not ax:
+                    continue
+                if inside(pts, g).any():
+                    problems.append("%s passes through text '%s'" % (lname, name(t)))
+    return sorted(set(problems))
+
+
+def save(fig, path, preview=True, check=True):
+    """Write <path>.svg for the post and <path>.preview.png for visual checking.
+    With check=True (default) it also reports colliding labels; fix every one."""
+    if check:
+        for prob in check_overlaps(fig):
+            print("blogfig OVERLAP in %s: %s" % (os.path.basename(path), prob))
     d = os.path.dirname(path)
     if d:
         os.makedirs(d, exist_ok=True)
     # annotations outside the axes (direct labels, notes) are not part of the tight bbox by
     # default and get clipped; pass them explicitly
-    from matplotlib.text import Text
-    extra = [t for t in fig.findobj(Text) if t.get_visible() and t.get_text()]
+    extra = _texts(fig, ticks=False)
     fig.savefig(path + ".svg", bbox_inches="tight", pad_inches=0.1, bbox_extra_artists=extra,
                 metadata={"Date": None, "Creator": None})
     if preview:
