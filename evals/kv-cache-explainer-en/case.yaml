@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: kv-cache-explainer-en
+expected_outcome: |
+  An English HTML explainer of the KV cache: why recomputation is wasteful, what is cached, the
+  per-token memory formula 2 x layers x kv_heads x head_dim x bytes, a correct memory-vs-context
+  chart for Llama-2-7B (32 layers, 32 heads, head_dim 128, fp16 -> 0.5 MiB/token, 2 GiB at 4k
+  tokens) vs a GQA variant (8 KV heads -> 4x less), and diagrams of the decoding loop and MHA vs
+  GQA/MQA head sharing.

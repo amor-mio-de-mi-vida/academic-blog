@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: chinchilla-paper-explainer
+expected_outcome: |
+  A Chinese HTML blog post explaining Chinchilla: the compute-optimal scaling question, the three
+  estimation approaches (fixed model sizes with varying tokens, IsoFLOP profiles, parametric loss
+  fit), the finding that parameters and tokens should scale roughly equally, Chinchilla 70B /
+  1.4T tokens vs Gopher 280B / 300B tokens, influence and limitations. Numbers traceable to the
+  paper, figures honest about provenance, readable to a grad student.

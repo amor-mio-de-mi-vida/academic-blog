@@ -1,0 +1,9 @@
+schema_version: "1.1"
+name: lora-ablation-from-csv
+expected_outcome: |
+  A Chinese HTML blog post that explains LoRA with a diagram (W + BA, shapes d x r and r x k),
+  then analyses the user's CSV: accuracy vs rank per task with seed variability shown, comparison
+  to full fine-tuning, trainable-parameter cost, and a rank recommendation that follows from the
+  data. Every plotted number matches the CSV.
+context:
+  scaffold_script: place-files.sh
