@@ -3,7 +3,7 @@
 
     python3 render.py figs/arch.svg          # -> figs/arch.preview.png (2x), styled with the
                                              #    template CSS so the d-* classes work
-    python3 render.py post.html              # -> post.page-01.png, post.page-02.png, ...
+    python3 render.py post.html              # -> _render/post.page-01.png, _render/post.page-02.png, ...
                                              #    the WHOLE page at desktop width (1440 px), in
                                              #    viewport-sized slices you can open with Read
     python3 render.py post.html --phone      # -> post.phone-01.png ... at a true 390 px viewport,
@@ -132,6 +132,10 @@ def slices(path, stem, width, height, phone):
     d = os.path.dirname(path)
     with open(path, encoding="utf-8") as f:
         src = f.read()
+    # slices go to <post dir>/_render/ so they don't clutter the post folder
+    rdir = os.path.join(os.path.dirname(stem), "_render")
+    os.makedirs(rdir, exist_ok=True)
+    stem = os.path.join(rdir, os.path.basename(stem))
     for old in glob.glob("%s.%s-*.png" % (stem, "phone" if phone else "page")):
         os.unlink(old)
     vw = 390 if phone else width

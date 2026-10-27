@@ -113,8 +113,8 @@ sidenotes, ASCII quotes in Chinese, short captions, uncited references.
 ### 6. Review the rendered post
 ```bash
 python3 SKILL_DIR/scripts/build_post.py <slug>/<slug>.src.html --offline   # review this build
-python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html           # -> <slug>.page-NN.png (desktop)
-python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html --phone   # -> <slug>.phone-NN.png (3 phone screens per image)
+python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html           # -> <slug>/_render/<slug>.page-NN.png (desktop)
+python3 SKILL_DIR/scripts/render.py <slug>/<slug>.html --phone   # -> <slug>/_render/<slug>.phone-NN.png (3 screens per image)
 ```
 Open every desktop slice with Read, and at least the phone slices containing figures and
 equations (phone slices show the 390 px page with a gray band on the right; that band is not

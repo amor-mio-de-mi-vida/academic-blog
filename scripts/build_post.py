@@ -248,13 +248,19 @@ def build(src_path, out_path, offline=False):
 
     base_dir = os.path.dirname(os.path.abspath(src_path))
     s = do_includes(s, base_dir)
+    for blk in re.findall(r"<pre\b[^>]*>(.*?)</pre>", s, flags=re.S):
+        long_lines = [l for l in html.unescape(re.sub(r"<[^>]+>", "", blk)).splitlines() if len(l) > 64]
+        if long_lines:
+            warn("code block has %d line(s) over 64 chars (they scroll sideways on phones): %s"
+                 % (len(long_lines), long_lines[0][:50]))
     s, store = protect(s)
 
     # placeholders / TODOs ------------------------------------------------------
     for ph in sorted(set(re.findall(r"\{\{[A-Za-z][^{}]{0,80}\}\}", s))):
         err("template placeholder left in text: %s" % ph)
     for t in sorted(set(re.findall(r"(\bTODO\b|\bTBD\b|\bFIXME\b|\bXXX\b|lorem ipsum|待补|待定|此处插入)", s, flags=re.I))):
-        err("unfinished marker in text: %s" % t)
+        err("unfinished marker in text: %s (if you are describing a TODO in source code, write "
+            "<code>%s</code> - code is not linted)" % (t, t))
     for mm in re.finditer(r"(?<![\\$])\$(?!\$)([^$\n<]{1,120}?)(?<!\\)\$(?!\$)", s):
         if re.search(r"[\\_^{}]", mm.group(1)):
             warn("single-dollar math is NOT rendered, use \\( ... \\): $%s$" % mm.group(1)[:40])
@@ -299,7 +305,8 @@ def build(src_path, out_path, offline=False):
         for li in re.findall(r"<li>(.*?)</li>", tl.group(1), flags=re.S):
             # count measurements (62.1, 70B, 1.4T, 3.2x, 45%); skip digits inside names (GQA-8,
             # Llama-2-7B, GSM8K), settings written as "r = 8", and years
-            t0 = re.sub(r"\\\(.*?\\\)", "", strip_tags(li))
+            t0 = re.sub(r"\x00\d+\x00", " ", li)            # protected <code> spans are not prose
+            t0 = re.sub(r"\\\(.*?\\\)", "", strip_tags(t0))
             t0 = re.sub(r"=\s*\d[\d.]*", "=", t0)
             nums = [n for n in re.findall(r"(?<![A-Za-z\d.\-])\d[\d,.]*(?:%|×|x|[KMBT])?(?![A-Za-z\d\-])", t0)
                     if not re.fullmatch(r"(19|20)\d\d", n)]

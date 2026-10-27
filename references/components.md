@@ -60,6 +60,8 @@ about 6 numeric columns in the 680 px column; split or transpose wider ones.
 - Inline math: `\( ... \)`. Display: `\[ ... \]` or `$$ ... $$`. Never single `$`.
 - Shared macros (`\R`, `\E`, `\softmax`) live in `window.POST_MACROS` at the bottom of the
   template; add the post's own notation there (e.g. `"\\Hkv": "H_{\\mathrm{kv}}"`).
+- Inside `aligned`/`gathered` the column separator must be written `&amp;` in the HTML source
+  (KaTeX receives `&`).
 - Long display equations overflow on narrow screens and collide with the equation number:
   split them with `\begin{aligned} ... \\ ... \end{aligned}` or `gathered`.
 
@@ -83,6 +85,7 @@ Reference list (order does not matter; the build numbers by first citation):
 <div class="callout key"><p class="callout-title">核心结论</p><p>…</p></div>
 <div class="callout def"><p class="callout-title">定义</p><p>…</p></div>
 <div class="callout warn"><p class="callout-title">常见误解</p><p>…</p></div>
+<div class="callout note"><p class="callout-title">说明</p><p>…</p></div>   <!-- neutral gray, e.g. series navigation -->
 
 <aside class="sidenote">放在它所注释的段落<b>之前</b>：宽屏时浮在右侧页边，窄屏时内联显示。</aside>
 <p>正文段落……</p>
