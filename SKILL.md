@@ -72,12 +72,33 @@ Read `references/writing.md`, then write:
 - Sections: heading phrased as a claim + 1–2 lines on what it establishes + its worked example.
 - **Figure plan** table: id · the one question it answers · form (data/diagram/table) ·
   data source (paper table X / computed / illustrative).
+- **Every complex mechanism in the outline gets a diagram in the figure plan.** Walk the section
+  list and ask of each: could a reader follow this from prose alone? If the answer is no — and it
+  usually is for anything with concurrency, memory layout, data movement or multi-step control
+  flow — the figure plan owes that section a diagram. A section carrying a hard mechanism with no
+  figure beside it is an outline defect, not a style choice.
 - A limitations section is part of every outline.
 
-Aim for 3–7 figures for a typical post; every one must answer a question the text raises. If
-the user is around and the topic is ambiguous, show them the outline; otherwise proceed.
+Aim for 4–8 figures for a typical post, and more when the subject is mechanism-heavy; every one
+must answer a question the text raises. If the user is around and the topic is ambiguous, show
+them the outline; otherwise proceed.
 
 ### 3. Make the figures — and look at each one
+- **Prefer a diagram over a paragraph for anything spatial, temporal or concurrent.** These
+  concept types are the ones prose handles worst, and each has a diagram form that handles it
+  well:
+  - *memory layout, packing, alignment, strides* → a to-scale cell grid with byte offsets and
+    shape labels; show one concrete instance, not the general formula.
+  - *data movement between units* (GPU↔GPU, HBM→SMEM→register, host→device) → a flow diagram
+    with the units as columns and the transfers as labelled arrows.
+  - *concurrency, pipelines, warp specialisation, producer–consumer* → a timeline with one row
+    per actor and time on the x-axis, so overlap and stalls are visible as geometry.
+  - *multi-step control flow or dispatch* → a numbered path through the boxes, the numbers
+    matching the steps in the prose.
+  - *a transformation of a tensor or layout* → before and after, stacked vertically and aligned,
+    so the reader sees the delta rather than reconstructing it.
+  When prose and a diagram would say the same thing, keep the diagram and shorten the prose to
+  what the diagram cannot carry.
 - **Data figures**: read `references/data-figures.md`. One script per figure in `plots/`,
   importing `blogfig` (`sys.path.insert(0, "SKILL_DIR/scripts")`); call `bf.use(cjk=True)` when
   the figure has Chinese text. Run with
@@ -137,6 +158,47 @@ Give the user the path to `<slug>.html` (single file; open it in any browser). B
 what each figure shows and its data provenance, and flag anything you could not verify. The
 `.src.html`, `plots/` and `figs/` stay alongside so the post can be edited and rebuilt.
 
+## Series logic (multi-post series)
+
+When a post belongs to a **multi-post series** (e.g. a codebase deep-dive, a library walkthrough),
+additional structure requirements apply:
+
+### Series-level organisation
+- **The series needs a 导读/overview post** that tells the reader: what the series covers, why it
+  matters, the architecture of the system being studied, a reading-order map (with dependency
+  arrows if non-linear), and a one-sentence summary of each post.
+- **Each post must declare its position**: a prereq callout at the top listing what the reader
+  should know (with links) and what new concepts this post introduces.
+- **The first post on each major component opens with a library/architecture overview** (~30–50
+  lines): what the library is, its main abstractions and classes, a typical usage flow, and where
+  this post fits. The reader should never encounter a class name (e.g. `EPBuffer`, `GemmDesc`)
+  without first understanding what role it plays in the system.
+
+### Per-post structure: 总-分-总 (overview → details → synthesis)
+Every post follows this three-act structure:
+
+1. **总 (opening)**: TL;DR + "为什么要读这一篇" + architecture context (where does this piece sit
+   in the system?) + the questions this post answers.
+2. **分 (body)**: each section is one question answered. Use the ladder of abstraction: intuition
+   → concrete example (code or diagram) → formal details → implications. **Go deep on the
+   technical core** — the reader should be able to answer interview follow-up questions like
+   "why this design instead of X?" and "what happens if you change Y?". Use diagrams and code
+   excerpts liberally: a well-annotated code block or an architecture diagram is worth more than
+   three paragraphs of prose.
+3. **总 (closing)**: a summary that re-states what was established, connects it back to the
+   system-level picture, and previews what the next post builds on top of.
+
+### Interview-ready depth
+The posts should prepare the reader to **withstand follow-up questions** in a technical
+interview. This means:
+- **Explain design decisions**: not just "it does X" but "it does X *because* Y; the alternative
+  Z would fail when…"
+- **Cover edge cases and failure modes**: what breaks, what the limits are, what the code does
+  when assumptions are violated.
+- **Include worked examples with real numbers** from the codebase, not just abstract descriptions.
+- **Use code + diagram combos**: show the code, then a diagram of what it does at runtime (data
+  flow, memory layout, timeline), so the reader builds two representations of the same mechanism.
+
 ## Non-negotiables (and why)
 
 - **No invented numbers.** Every plotted or quoted number is from a cited source, from code
@@ -148,6 +210,10 @@ what each figure shows and its data provenance, and flag anything you could not 
 - **Every symbol defined, every acronym expanded** at first use — undefined notation is the
   main reason explainers fail their readers.
 - **Limitations section** in every post — it is what makes the rest credible.
+- **No hard mechanism explained in prose alone.** If a reader has to hold more than about three
+  moving parts in their head at once — concurrent actors, a memory layout, a multi-hop data path
+  — that passage needs a diagram beside it. Prose forces a sequential read of something the
+  reader has to understand as a whole, and that is where explainers lose people.
 - **One visual system**: use `blogfig` for plots and the template's `d-*` classes for diagrams
   rather than ad-hoc styles, so the page looks designed rather than assembled.
 
